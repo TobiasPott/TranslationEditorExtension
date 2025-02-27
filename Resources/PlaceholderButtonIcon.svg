@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="100%" height="100%" viewBox="0 0 20 20" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+    <g id="check_box_outline_blank_24dp_E3E3E3_FILL0_wght400_GRAD0_opsz24.svg" transform="matrix(0.416667,0,0,0.416667,5,10)">
+        <g transform="matrix(1,0,0,1,-12,-12)">
+            <path d="M5,21C4.45,21 3.979,20.804 3.588,20.413C3.196,20.021 3,19.55 3,19L3,5C3,4.45 3.196,3.979 3.588,3.587C3.979,3.196 4.45,3 5,3L19,3C19.55,3 20.021,3.196 20.413,3.587C20.804,3.979 21,4.45 21,5L21,19C21,19.55 20.804,20.021 20.413,20.413C20.021,20.804 19.55,21 19,21L5,21ZM5,19L19,19L19,5L5,5L5,19Z" style="fill:white;fill-rule:nonzero;"/>
+        </g>
+    </g>
+    <g id="repeat_24dp_E3E3E3_FILL0_wght400_GRAD0_opsz24.svg" transform="matrix(0.584109,0,0,0.584109,10,6)">
+        <g transform="matrix(1,0,0,1,-12,-12)">
+            <path d="M5,11L5,5L17.15,5L15.6,3.45L17,2L21,6L17,10L15.6,8.55L17.15,7L7,7L7,11L5,11Z" style="fill:white;fill-rule:nonzero;"/>
+        </g>
+    </g>
+    <g id="repeat_24dp_E3E3E3_FILL0_wght400_GRAD0_opsz24.svg1" serif:id="repeat_24dp_E3E3E3_FILL0_wght400_GRAD0_opsz24.svg" transform="matrix(-0.584109,7.15327e-17,-7.15327e-17,-0.584109,10,14)">
+        <g transform="matrix(1,0,0,1,-12,-12)">
+            <path d="M5,11L5,5L17.15,5L15.6,3.45L17,2L21,6L17,10L15.6,8.55L17.15,7L7,7L7,11L5,11Z" style="fill:white;fill-rule:nonzero;"/>
+        </g>
+    </g>
+    <g id="check_box_24dp_E3E3E3_FILL0_wght400_GRAD0_opsz24.svg" transform="matrix(0.416667,0,0,0.416667,15,10)">
+        <g transform="matrix(1,0,0,1,-12,-12)">
+            <path d="M10.6,16.2L17.65,9.15L16.25,7.75L10.6,13.4L7.75,10.55L6.35,11.95L10.6,16.2ZM5,21C4.45,21 3.979,20.804 3.588,20.413C3.196,20.021 3,19.55 3,19L3,5C3,4.45 3.196,3.979 3.588,3.587C3.979,3.196 4.45,3 5,3L19,3C19.55,3 20.021,3.196 20.413,3.587C20.804,3.979 21,4.45 21,5L21,19C21,19.55 20.804,20.021 20.413,20.413C20.021,20.804 19.55,21 19,21L5,21ZM5,19L19,19L19,5L5,5L5,19ZM5,5L5,19L5,5Z" style="fill:white;fill-rule:nonzero;"/>
+        </g>
+    </g>
+</svg>
