@@ -44,6 +44,7 @@ TSharedRef< FSlateStyleSet > FTranslationEditorExtensionStyle::Create()
 
 	Style->Set("TranslationEditorExtension.ToggleAllReviewedAction", new IMAGE_BRUSH_SVG(TEXT("ToggleAllReviewedIcon"), Icon20x20));
 	Style->Set("TranslationEditorExtension.TransferSourceAction", new IMAGE_BRUSH_SVG(TEXT("TransferSourceIcon"), Icon20x20));
+	Style->Set("TranslationEditorExtension.ClearTranslationAction", new IMAGE_BRUSH_SVG(TEXT("ClearTranslationIcon"), Icon20x20));
 	return Style;
 }
 

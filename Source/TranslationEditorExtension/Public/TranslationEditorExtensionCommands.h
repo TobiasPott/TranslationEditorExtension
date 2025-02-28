@@ -21,4 +21,5 @@ public:
 public:
 	TSharedPtr< FUICommandInfo > ToggleAllReviewedAction;
 	TSharedPtr< FUICommandInfo > TransferSourceAction;
+	TSharedPtr< FUICommandInfo > ClearTranslationAction;
 };

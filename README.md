@@ -3,7 +3,8 @@
 This plugin is an extension for the Unreal Editor (version 5.3 or newer) to provide convenience features missing from the translation editor in the localization dashboard.
 With this first release the plugin adds the following feature to the translation editor:
   * Toggle All Reviewed - This is a single button which toggles all entries to review on or off (e.g. after importing translations from a .po file).
-  * Transfer Source - This is a single button which copies the value from the source to translation column (in complete and untranslated tabs)
+  * Transfer Source - This is a single button which copies the value from the source to translation column (in completed and untranslated tabs)
+  * Clear Translation - This is a single button which clear the translation column (in completed and untranslated tabs)
  
 
 # How to Use

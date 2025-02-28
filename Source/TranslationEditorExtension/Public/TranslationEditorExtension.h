@@ -20,6 +20,8 @@ public:
 	void ToggleAllReviewedButtonClicked();
 	/** This function will be bound to Command. */
 	void TransferSourceButtonClicked();
+	/** This function will be bound to Command. */
+	void ClearTranslationButtonClicked();
 
 	static bool GetWidgetsAndEditor(const FTabId& TabId, TSharedPtr<SDockTab>& OutTab, TSharedPtr<SWidget>& OutContent, FAssetEditorToolkit*& OutEditorToolkit);
 	/**
