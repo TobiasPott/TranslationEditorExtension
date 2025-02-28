@@ -8,11 +8,23 @@
 #include "IPropertyTableRow.h"
 #include "Editor/PropertyEditor/Private/Presentation/PropertyTable/DataSource.h"
 #include "Editor/TranslationEditor/Private/TranslationUnit.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 static const FName TranslationEditorExtensionTabName("TranslationEditorExtension");
+
+
+static const FName UntranslatedTabName(TEXT("TranslationEditor_Untranslated"));
 // Names and TabIds need to be checked with UnrealEngine's TranslationEditor internal names when porting this plugin to a different version
-static const FName ReviewTabName("TranslationEditor_Review");
+static const FName ReviewTabName(TEXT("TranslationEditor_Review"));
+//static const FName UntranslatedTabName(TEXT("TranslationEditor_Untranslated"));
+static const FName CompletedTabName(TEXT("TranslationEditor_Completed"));
+//static const FName PreviewTabName(TEXT("TranslationEditor_Preview"));
+
+static const FTabId UntranslatedTabId(UntranslatedTabName);
 static const FTabId ReviewTabId(ReviewTabName);
+//static const FTabId UntranslatedTabId(UntranslatedTabId);
+static const FTabId CompletedTabId(CompletedTabName);
+//static const FTabId PreviewTabId(PreviewTabName);
 
 // Names for where to place the extension and what to name its section
 static const FName MenuUIExtensionPoint("AssetEditor.TranslationEditor.ToolBar");
@@ -32,9 +44,12 @@ void FTranslationEditorExtensionModule::StartupModule()
 
 	PluginCommands = MakeShareable(new FUICommandList);
 
-	PluginCommands->MapAction(
-		FTranslationEditorExtensionCommands::Get().PluginAction,
-		FExecuteAction::CreateRaw(this, &FTranslationEditorExtensionModule::PluginButtonClicked),
+	PluginCommands->MapAction(FTranslationEditorExtensionCommands::Get().ToggleAllReviewedAction,
+		FExecuteAction::CreateRaw(this, &FTranslationEditorExtensionModule::ToggleAllReviewedButtonClicked),
+		FCanExecuteAction());
+
+	PluginCommands->MapAction(FTranslationEditorExtensionCommands::Get().TransferSourceAction,
+		FExecuteAction::CreateRaw(this, &FTranslationEditorExtensionModule::TransferSourceButtonClicked),
 		FCanExecuteAction());
 
 	UToolMenus::RegisterStartupCallback(FSimpleMulticastDelegate::FDelegate::CreateRaw(this, &FTranslationEditorExtensionModule::RegisterMenus));
@@ -54,7 +69,138 @@ void FTranslationEditorExtensionModule::ShutdownModule()
 	FTranslationEditorExtensionCommands::Unregister();
 }
 
-void FTranslationEditorExtensionModule::PluginButtonClicked()
+void FTranslationEditorExtensionModule::ToggleAllReviewedButtonClicked()
+{
+	TSharedPtr<SDockTab> ReviewTab;
+	TSharedPtr<SWidget> ReviewContent;
+	FAssetEditorToolkit* EditorToolkit;
+	FString ExtName = TEXT("Toggle All Reviewed");
+
+	if (GetWidgetsAndEditor(ReviewTabId, ReviewTab, ReviewContent, EditorToolkit))
+	{
+		if (EditorToolkit != nullptr)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Executing %s on: %s."), *ExtName, *EditorToolkit->GetToolkitName().ToString());
+		}
+
+		FChildren* ReviewContentChildren = ReviewContent->GetChildren();
+		if (ReviewContentChildren->Num() > 0)
+		{
+			TSharedPtr<SWidget> FirstChild = ReviewContentChildren->GetChildAt(0);
+			SWidget* ChildWidget = FirstChild.Get();
+
+			// the first child of the TranslationEditor border is assumed to be a SPropertyTable (which is a private type in the PropertyEditor module)
+			//	the SPropertyTable is derived from STreeView which provides access to its items and the referenced asset object
+			STreeView<TSharedRef<IPropertyTableRow>>* PropertyTableWidget = static_cast<STreeView<TSharedRef<IPropertyTableRow>>*>(ChildWidget);
+			if (PropertyTableWidget != nullptr)
+			{
+				TArrayView<const TSharedRef<IPropertyTableRow>> ItemView = PropertyTableWidget->GetRootItems();
+				for (int ItemIdx = 0; ItemIdx < ItemView.Num(); ItemIdx++)
+				{
+					TSharedRef<IDataSource> Source = ItemView[ItemIdx]->GetDataSource();
+					//FPropertyPath* PropPath = Source.Get().AsPropertyPath().Get();
+					UObject* ItemObject = Source.Get().AsUObject().Get();
+
+					UTranslationUnit* ItemTranslationUnit = Cast<UTranslationUnit>(ItemObject);
+					if (ItemTranslationUnit != nullptr)
+						ItemTranslationUnit->HasBeenReviewed = !ItemTranslationUnit->HasBeenReviewed;
+					// Uncomment for additional info log of table rows
+					// UE_LOG(LogTemp, Warning, TEXT("Item: %d. TableRow: %s"), ItemIdx, *UKismetSystemLibrary::GetDisplayName(PropObject));
+				}
+
+				PropertyTableWidget->RequestListRefresh();
+				UE_LOG(LogTemp, Log, TEXT("PropertyTable (TreeView): %s. Rows in PropertyTable: %d"), *PropertyTableWidget->ToString(), ItemView.Num());
+
+			}
+
+		}
+		if (EditorToolkit != nullptr)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Finished work on: %s."), *EditorToolkit->GetToolkitName().ToString());
+		}
+	}
+	return;
+}
+
+void FTranslationEditorExtensionModule::TransferSourceButtonClicked()
+{
+	TSharedPtr<SDockTab> CurrentTab;
+	TSharedPtr<SWidget> CurrentContent;
+	FAssetEditorToolkit* EditorToolkit;
+	FString ExtName = TEXT("TransferSource");
+
+	// try get completed tab if it is the active of the current focused editor
+	bool bFoundEditor = GetWidgetsAndEditor(CompletedTabId, CurrentTab, CurrentContent, EditorToolkit);
+	if (!bFoundEditor)
+		// try get untranslated tab if completed wasn't found (assume it wasn't active or available)
+		bFoundEditor = GetWidgetsAndEditor(UntranslatedTabId, CurrentTab, CurrentContent, EditorToolkit);
+	// process further if anything was found
+	if (bFoundEditor)
+	{
+		// get user confirmation for action (might lose data on reset)
+		if (!CheckConfirmDialog(FText::GetEmpty()))
+		{
+			if (EditorToolkit != nullptr)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Aborted execution %s on: %s."), *ExtName, *EditorToolkit->GetToolkitName().ToString());
+			}
+			return;
+		}
+		if (EditorToolkit != nullptr)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Executing %s on: %s."), *ExtName, *EditorToolkit->GetToolkitName().ToString());
+		}
+
+		FChildren* ReviewContentChildren = CurrentContent->GetChildren();
+		if (ReviewContentChildren->Num() > 0)
+		{
+			TSharedPtr<SWidget> FirstChild = ReviewContentChildren->GetChildAt(0);
+			SWidget* ChildWidget = FirstChild.Get();
+
+			// the first child of the TranslationEditor border is assumed to be a SPropertyTable (which is a private type in the PropertyEditor module)
+			//	the SPropertyTable is derived from STreeView which provides access to its items and the referenced asset object
+			STreeView<TSharedRef<IPropertyTableRow>>* PropertyTableWidget = static_cast<STreeView<TSharedRef<IPropertyTableRow>>*>(ChildWidget);
+			if (PropertyTableWidget != nullptr)
+			{
+				TArrayView<const TSharedRef<IPropertyTableRow>> ItemView = PropertyTableWidget->GetRootItems();
+				for (int ItemIdx = 0; ItemIdx < ItemView.Num(); ItemIdx++)
+				{
+					TSharedRef<IDataSource> Source = ItemView[ItemIdx]->GetDataSource();
+					//FPropertyPath* PropPath = Source.Get().AsPropertyPath().Get();
+					UObject* ItemObject = Source.Get().AsUObject().Get();
+
+					UTranslationUnit* ItemTranslationUnit = Cast<UTranslationUnit>(ItemObject);
+					if (ItemTranslationUnit != nullptr)
+					{
+						if (!ItemTranslationUnit->Translation.Equals(ItemTranslationUnit->Source))
+							ItemTranslationUnit->Translation = ItemTranslationUnit->Source;
+						//// ToDo: @tpott: Unsure whether the reset to TranslationBeforeImport is ueful (is empty string while testing)
+						////				might be a thing to lose the current translation (imported) after reset as I cannot save the translation on copy
+						////				maybe add a dialog confirm to this extension function (seems lightl risky)
+						//else
+						//	ItemTranslationUnit->Translation = ItemTranslationUnit->TranslationBeforeImport;
+					}
+					// Uncomment for additional info log of table rows
+					// UE_LOG(LogTemp, Warning, TEXT("Item: %d. TableRow: %s"), ItemIdx, *UKismetSystemLibrary::GetDisplayName(ItemObject));
+					// refresh item view to reflect value changes in property table
+					ItemView[ItemIdx]->Refresh();
+				}
+
+				PropertyTableWidget->RequestListRefresh();
+				UE_LOG(LogTemp, Log, TEXT("PropertyTable (TreeView): %s. Rows in PropertyTable: %d"), *PropertyTableWidget->ToString(), ItemView.Num());
+
+			}
+
+		}
+		if (EditorToolkit != nullptr)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Finished work on: %s."), *EditorToolkit->GetToolkitName().ToString());
+		}
+		return;
+	}
+}
+
+bool FTranslationEditorExtensionModule::GetWidgetsAndEditor(const FTabId& TabId, TSharedPtr<SDockTab>& OutTab, TSharedPtr<SWidget>& OutContent, FAssetEditorToolkit*& OutEditorToolkit)
 {
 	FSlateApplication& SlateApp = FSlateApplication::Get();
 	const TSharedPtr<SWidget> FocusedWidget = SlateApp.GetKeyboardFocusedWidget();
@@ -74,59 +220,21 @@ void FTranslationEditorExtensionModule::PluginButtonClicked()
 			{
 				// find editor for the translation unit asset
 				TSharedPtr<FTabManager> TabManager = CurrentEditor->GetAssociatedTabManager();
-				TSharedPtr<SDockTab> ReviewTab = TabManager->FindExistingLiveTab(ReviewTabId);
-				TSharedPtr<SWidget> ReviewContent = ReviewTab->GetContent();
+				OutTab = TabManager->FindExistingLiveTab(TabId);
+				OutContent = OutTab->GetContent();
 
-				TSharedPtr<SWidget> ReviewParent = ReviewTab->GetParentWidget();
+				TSharedPtr<SWidget> ReviewParent = OutTab->GetParentWidget();
 				if (IsGrandChildOf(ReviewParent, FocusedWidget))
 				{
-					FAssetEditorToolkit* EditorToolkit = static_cast <FAssetEditorToolkit*>(CurrentEditor);
-					if (EditorToolkit != nullptr)
-					{
-						UE_LOG(LogTemp, Warning, TEXT("Working on: %s."), *EditorToolkit->GetToolkitName().ToString());
-					}
-
-					FChildren* ReviewContentChildren = ReviewContent->GetChildren();
-					if (ReviewContentChildren->Num() > 0)
-					{
-						TSharedPtr<SWidget> FirstChild = ReviewContentChildren->GetChildAt(0);
-						SWidget* ChildWidget = FirstChild.Get();
-
-						// the first child of the TranslationEditor border is assumed to be a SPropertyTable (which is a private type in the PropertyEditor module)
-						//	the SPropertyTable is derived from STreeView which provides access to its items and the referenced asset object
-						STreeView<TSharedRef<IPropertyTableRow>>* PropertyTableWidget = static_cast<STreeView<TSharedRef<IPropertyTableRow>>*>(ChildWidget);
-						if (PropertyTableWidget != nullptr)
-						{
-							TArrayView<const TSharedRef<IPropertyTableRow>> ItemView = PropertyTableWidget->GetRootItems();
-							for (int ItemIdx = 0; ItemIdx < ItemView.Num(); ItemIdx++)
-							{
-								TSharedRef<IDataSource> Source = ItemView[ItemIdx]->GetDataSource();
-								//FPropertyPath* PropPath = Source.Get().AsPropertyPath().Get();
-								UObject* ItemObject = Source.Get().AsUObject().Get();
-
-								UTranslationUnit* ItemTranslationUnit = Cast<UTranslationUnit>(ItemObject);
-								if (ItemTranslationUnit != nullptr)
-									ItemTranslationUnit->HasBeenReviewed = !ItemTranslationUnit->HasBeenReviewed;
-								// Uncomment for additional info log of table rows
-								// UE_LOG(LogTemp, Warning, TEXT("Item: %d. TableRow: %s"), ItemIdx, *UKismetSystemLibrary::GetDisplayName(PropObject));
-							}
-
-							PropertyTableWidget->RequestListRefresh();
-							UE_LOG(LogTemp, Log, TEXT("PropertyTable (TreeView): %s. Rows in PropertyTable: %d"), *PropertyTableWidget->ToString(), ItemView.Num());
-
-						}
-
-					}
-					if (EditorToolkit != nullptr)
-					{
-						UE_LOG(LogTemp, Warning, TEXT("Finished work on: %s."), *EditorToolkit->GetToolkitName().ToString());
-					}
-					break;
+					OutEditorToolkit = static_cast<FAssetEditorToolkit*>(CurrentEditor);
+					if (OutTab->IsActive())
+						return true;
 				}
 			}
 		}
 	}
 
+	return false;
 }
 
 bool FTranslationEditorExtensionModule::IsGrandChildOf(const TSharedPtr<SWidget>& Widget, const TSharedPtr<SWidget>& Parent)
@@ -147,6 +255,13 @@ bool FTranslationEditorExtensionModule::IsGrandChildOf(const TSharedPtr<SWidget>
 	return false;
 }
 
+bool FTranslationEditorExtensionModule::CheckConfirmDialog(FText Message)
+{
+	FText DialogText = Message.IsEmptyOrWhitespace() ? FText::FromString(TEXT("Are you sure?")) : Message;
+	EAppReturnType::Type DialogReturn = FMessageDialog::Open(EAppMsgType::YesNo, DialogText);
+	return DialogReturn == EAppReturnType::Yes;
+}
+
 void FTranslationEditorExtensionModule::RegisterMenus()
 {
 	// Owner will be used for cleanup in call to UToolMenus::UnregisterOwner
@@ -155,8 +270,10 @@ void FTranslationEditorExtensionModule::RegisterMenus()
 	{
 		FToolMenuSection& Section = ToolbarMenu->FindOrAddSection(PluginMenuSection);
 		{
-			FToolMenuEntry& Entry = Section.AddEntry(FToolMenuEntry::InitToolBarButton(FTranslationEditorExtensionCommands::Get().PluginAction));
-			Entry.SetCommandList(PluginCommands);
+			FToolMenuEntry& EntryToggleAllReviewed = Section.AddEntry(FToolMenuEntry::InitToolBarButton(FTranslationEditorExtensionCommands::Get().ToggleAllReviewedAction));
+			FToolMenuEntry& EntryCopySourceToTranslation = Section.AddEntry(FToolMenuEntry::InitToolBarButton(FTranslationEditorExtensionCommands::Get().TransferSourceAction));
+			EntryToggleAllReviewed.SetCommandList(PluginCommands);
+			EntryCopySourceToTranslation.SetCommandList(PluginCommands);
 		}
 	}
 }

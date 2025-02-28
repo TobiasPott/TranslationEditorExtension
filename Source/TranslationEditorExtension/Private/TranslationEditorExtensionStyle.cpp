@@ -35,13 +35,15 @@ FName FTranslationEditorExtensionStyle::GetStyleSetName()
 
 const FVector2D Icon16x16(16.0f, 16.0f);
 const FVector2D Icon20x20(20.0f, 20.0f);
+const FVector2D Icon32x32(32.0f, 32.0f);
 
 TSharedRef< FSlateStyleSet > FTranslationEditorExtensionStyle::Create()
 {
 	TSharedRef< FSlateStyleSet > Style = MakeShareable(new FSlateStyleSet("TranslationEditorExtensionStyle"));
 	Style->SetContentRoot(IPluginManager::Get().FindPlugin("TranslationEditorExtension")->GetBaseDir() / TEXT("Resources"));
 
-	Style->Set("TranslationEditorExtension.PluginAction", new IMAGE_BRUSH_SVG(TEXT("PlaceholderButtonIcon"), Icon20x20));
+	Style->Set("TranslationEditorExtension.ToggleAllReviewedAction", new IMAGE_BRUSH_SVG(TEXT("ToggleAllReviewedIcon"), Icon20x20));
+	Style->Set("TranslationEditorExtension.TransferSourceAction", new IMAGE_BRUSH_SVG(TEXT("TransferSourceIcon"), Icon20x20));
 	return Style;
 }
 
