@@ -14,5 +14,11 @@ This plugin is provided as source code and requires you to build it with your Un
   * Open your project and let it rebuild the plugin.
   * For C++ projects, regenerate your solution file, open it in your IDE and build your project.
 
+# Remarks
 
+You may need to check if your translation editor and desired tab to work on is in user focus. The Unreal Editor UI uses a slight blue glow on tabs to indicate that (or what I assume is user focus).  
+The following snippets illustrate the difference. Click on or inside the tab's body to give focus.
 
+|![image](https://github.com/user-attachments/assets/af30c69b-d949-4166-9f80-2dbde3efc4bc) |  ![image](https://github.com/user-attachments/assets/97741bb4-8b08-4d34-ae8e-78515c7868da)|
+| ----------- | ----------- |
+| *No focus at all* | *Need Review is in focus* |
